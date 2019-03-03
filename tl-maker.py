@@ -2,7 +2,6 @@
 
 import os
 import argparse
-import time
 
 class TranslationMaker(object):
     def loopThroughFileStructure(self, parent_path, file_list, level):
@@ -21,22 +20,14 @@ class TranslationMaker(object):
 
                 # If current full path is of file
                 if os.path.isfile(full_path):
-                    self.parseFile(full_path)
+                    _, file_extension = os.path.splitext(full_path)
+                    if file_extension in self.valid_ext:
+                        self.parseFile(full_path)
 
                 # If sub directory is not in excluded path, traverse it
                 if os.path.isdir(full_path) and sub_path not in self.ex_folder:
                     # print(full_path)
                     self.loopThroughFileStructure(full_path, os.listdir(full_path), level + 1)
-
-    def make(self, args):
-        self.root = args.root
-        self.ex_folder = args.exclude_folder
-        self.ex_name = args.exclude_name
-        self.max_level = args.max_level
-
-        self.loopThroughFileStructure(self.root, os.listdir(self.root), 0)
-
-        return 'end'
 
     def parseFile(self, full_path):
         # Loop through file and find translation usage, noting location of usage if unable to write it
@@ -56,13 +47,65 @@ class TranslationMaker(object):
             self.informOfUnstoredTranslations(unstored_translations)
 
     def getTranslationUsage(self, full_path):
+        '''
+            Loop through file,
+            if there is a "__(" or "trans(" record the content until the next valid closing parentheses
+        '''
         translations = []
 
         with open(full_path) as file:
-            lines = [line.rstrip('\n') for line in file]
-            print (lines)
+            print (full_path)
+            translation_string = ''
+            for key, line in enumerate(file):
+                #Skip newlines
+                if line == '\n':
+                    continue
+
+                #While new start indexes can be found on this line, record them
+                loop_through_string = True
+                while (loop_through_string):
+                    # If translation string was already started, its a multiline translation and we need to record from string start
+                    if len(translation_string) > 0:
+                        start_index = 0
+                        prefix_length = 0
+                        print ('ding', translation_string)
+                        break
+                    else:
+                        #check for "__(", if not found then "trans(", if not found either, go to next line
+                        start_index = line.find("__(")
+                        prefix_length = len("__(")
+                        if start_index == -1:
+                            start_index = line.find("trans(")
+                            prefix_length = len("trans(")
+                            if start_index == -1:
+                                break
+
+                    substring = line[start_index + prefix_length:]
+                    print(substring)
+                    closing_parentheses = substring.find(")")
+
+                    # If string does not contain closing parentheses, check and cleanup comment lines and start multiline translation recording
+                    translation_string += self.removeStringComments(substring)
+                    if closing_parentheses == -1:
+                        break
+                    else:
+                        loop_through_string: False
+
+
+                    # If there is a closing parentheses, check for opening parentheses in the middle of text, possibly skip to next parentheses
+                    print(substring[:closing_parentheses])
+                    # die()
+                    line = line[closing_parentheses:]
+                    translations.append({
+                        'file': full_path,
+                        'line': key,
+                        'translation': translation_string
+                    })
 
         return translations
+
+    def removeStringComments(self, substring):
+        return substring
 
     def prepareTranslationStrings(self, translations):
         return translations
@@ -73,6 +116,17 @@ class TranslationMaker(object):
 
     def informOfUnstoredTranslations(self, unstored_translations):
         print(unstored_translations)
+
+    def make(self, args):
+        self.root = args.root
+        self.ex_folder = args.exclude_folder
+        self.ex_name = args.exclude_name
+        self.max_level = args.max_level
+        self.valid_ext = args.valid_extensions
+
+        self.loopThroughFileStructure(self.root, os.listdir(self.root), 0)
+
+        return 'end'
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser()
