@@ -14,7 +14,7 @@ class TranslationMaker(object):
             file_list.sort(key=lambda f: os.path.isfile(os.path.join(parent_path, f)))
             for _, sub_path in enumerate(file_list):
                 # If file or directory is of excluded name, skip it
-                if any(exclude_name in sub_path for exclude_name in self.exn):
+                if any(exclude_name in sub_path for exclude_name in self.ex_name):
                     continue
 
                 full_path = os.path.join(parent_path, sub_path)
@@ -24,14 +24,14 @@ class TranslationMaker(object):
                     self.parseFile(full_path)
 
                 # If sub directory is not in excluded path, traverse it
-                if os.path.isdir(full_path) and sub_path not in self.exf:
+                if os.path.isdir(full_path) and sub_path not in self.ex_folder:
                     # print(full_path)
                     self.loopThroughFileStructure(full_path, os.listdir(full_path), level + 1)
 
     def make(self, args):
         self.root = args.root
-        self.exf = args.exclude_folder
-        self.exn = args.exclude_name
+        self.ex_folder = args.exclude_folder
+        self.ex_name = args.exclude_name
         self.max_level = args.max_level
 
         self.loopThroughFileStructure(self.root, os.listdir(self.root), 0)
@@ -58,6 +58,10 @@ class TranslationMaker(object):
     def getTranslationUsage(self, full_path):
         translations = []
 
+        with open(full_path) as file:
+            lines = [line.rstrip('\n') for line in file]
+            print (lines)
+
         return translations
 
     def prepareTranslationStrings(self, translations):
@@ -74,9 +78,11 @@ if __name__ == "__main__":
     parser = argparse.ArgumentParser()
     parser.add_argument("-r", "--root", help="root of file tree", default=".")
     parser.add_argument("-o", "--output", help="output file name", default="")
-    parser.add_argument("-xf", "--exclude_folder", nargs='*', help="exclude folder", default=['.git'])
-    parser.add_argument("-xn", "--exclude_name", nargs='*', help="exclude name", default=[])
-    parser.add_argument("-m", "--max_level", help="max level",
-                        type=int, default=-1)
+    parser.add_argument("-xf", "--exclude_folder", nargs='*', help="Exclude folder", default=['.git', '.vscode'])
+    parser.add_argument("-xn", "--exclude_name", nargs='*', help="Exclude name", default=[])
+    parser.add_argument("-m", "--max_level", help="max level", type=int, default=-1)
+    parser.add_argument("-vex", "--valid_extensions", nargs='*', help="Valid file extensions", default=['.php'])
+
     args = parser.parse_args()
+
     print(TranslationMaker().make(args))
