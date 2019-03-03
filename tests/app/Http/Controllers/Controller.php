@@ -20,6 +20,13 @@ class Controller extends BaseController
         $var_three = "value_three"; #another comment
         $var_four = 'value_four'; //comment
         $translation_arr = [ __('translation.first_one'), trans('translation.second_one') ];
+        $multiline_translation = trans(
+            'translation.multiline1'
+        );
+        $multiline_translation2 = trans(
+            'translation.' .
+            'multiline2'
+        );
         $translations = [
             __('translation.simpletext'),
             __("translation.$var_three"),
