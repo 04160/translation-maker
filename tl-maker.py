@@ -63,13 +63,14 @@ class TranslationMaker(object):
 
                 #While new start indexes can be found on this line, record them
                 loop_through_string = True
+                current_line = line
+                print(current_line)
                 while (loop_through_string):
                     # If translation string was already started, its a multiline translation and we need to record from string start
                     if len(translation_string) > 0:
                         start_index = 0
                         prefix_length = 0
-                        print ('ding', translation_string)
-                        break
+                        # print ('ping')
                     else:
                         #check for "__(", if not found then "trans(", if not found either, go to next line
                         start_index = line.find("__(")
@@ -79,32 +80,43 @@ class TranslationMaker(object):
                             prefix_length = len("trans(")
                             if start_index == -1:
                                 break
+                        # print ('pong')
 
                     substring = line[start_index + prefix_length:]
-                    print(substring)
                     closing_parentheses = substring.find(")")
-
+                    # break
+                    # print({'substring': substring})
+                    # print({'substring[:closing_parentheses]': substring[:closing_parentheses]})
+                    # print({'closing_parentheses': closing_parentheses})
                     # If string does not contain closing parentheses, check and cleanup comment lines and start multiline translation recording
-                    translation_string += self.removeStringComments(substring)
+                    # print({'translation_string': translation_string})
+                    # break
                     if closing_parentheses == -1:
+                        translation_string += self.removeStringComments(substring[:closing_parentheses])
                         break
                     else:
+                        translation_string += self.removeStringComments(substring[:closing_parentheses])
                         loop_through_string: False
 
+                    current_line = current_line[closing_parentheses:]
+
+                    # print({'translation_string': translation_string})
 
                     # If there is a closing parentheses, check for opening parentheses in the middle of text, possibly skip to next parentheses
-                    print(substring[:closing_parentheses])
-                    # die()
-                    line = line[closing_parentheses:]
+                    # print({'current_line': current_line})
+                    # break
                     translations.append({
                         'file': full_path,
                         'line': key,
                         'translation': translation_string
                     })
-
+                    translation_string = ''
+                    # break
+        print(translations)
         return translations
 
     def removeStringComments(self, substring):
+        print({'substring': substring})
         return substring
 
     def prepareTranslationStrings(self, translations):
