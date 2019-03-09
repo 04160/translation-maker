@@ -73,16 +73,16 @@ class TranslationMaker(object):
                         # print ('ping')
                     else:
                         #check for "__(", if not found then "trans(", if not found either, go to next line
-                        start_index = line.find("__(")
+                        start_index = current_line.find("__(")
                         prefix_length = len("__(")
                         if start_index == -1:
-                            start_index = line.find("trans(")
+                            start_index = current_line.find("trans(")
                             prefix_length = len("trans(")
                             if start_index == -1:
                                 break
                         # print ('pong')
 
-                    substring = line[start_index + prefix_length:]
+                    substring = current_line[start_index + prefix_length:]
                     closing_parentheses = substring.find(")")
                     # break
                     # print({'substring': substring})
@@ -92,18 +92,20 @@ class TranslationMaker(object):
                     # print({'translation_string': translation_string})
                     # break
                     if closing_parentheses == -1:
-                        translation_string += self.removeStringComments(substring[:closing_parentheses])
+                        translation_string += self.removeStringComments(substring)
+                        loop_through_string: False
                         break
                     else:
                         translation_string += self.removeStringComments(substring[:closing_parentheses])
-                        loop_through_string: False
+                        # loop_through_string: False
 
                     current_line = current_line[closing_parentheses:]
 
                     # print({'translation_string': translation_string})
 
                     # If there is a closing parentheses, check for opening parentheses in the middle of text, possibly skip to next parentheses
-                    # print({'current_line': current_line})
+                    print({'current_line': current_line})
+                    # break
                     # break
                     translations.append({
                         'file': full_path,
@@ -112,7 +114,7 @@ class TranslationMaker(object):
                     })
                     translation_string = ''
                     # break
-        print(translations)
+        # print(translations)
         return translations
 
     def removeStringComments(self, substring):
@@ -120,10 +122,11 @@ class TranslationMaker(object):
         return substring
 
     def prepareTranslationStrings(self, translations):
+        self.prettyPrint(translations)
         return translations
 
     def storeTranslations(self, translations):
-        print(translations)
+        # print(translations)
         return translations
 
     def informOfUnstoredTranslations(self, unstored_translations):
@@ -139,6 +142,10 @@ class TranslationMaker(object):
         self.loopThroughFileStructure(self.root, os.listdir(self.root), 0)
 
         return 'end'
+
+    def prettyPrint(self, list):
+        for value in list:
+            print(value)
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser()
